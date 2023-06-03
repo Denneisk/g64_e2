@@ -1,0 +1,13 @@
+{
+	"title"		:	"[E2] G64 Core",
+	"type"		:	"tool",
+	"tags"		:	[ "build", "fun" ],
+	"description":	"Allows Expression2 interaction with G64.",
+	"ignore"	:
+	[
+		".git*",
+		"LICENSE",
+		"README*",
+		"thumbnail.jpg"
+	]
+}
