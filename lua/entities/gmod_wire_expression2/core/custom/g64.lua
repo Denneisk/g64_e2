@@ -2,6 +2,8 @@ E2Lib.RegisterExtension("g64", true, "Allows interaction with G64 using Expressi
 
 util.AddNetworkString("G64_E2")
 
+if not g64_e2 then g64_e2 = {} end
+
 local STRING_TO_TRACKID = { ["Star Catch Fanfare"] = 1,
 		["Title Theme"] = 2,
 		["Bob-Omb Battlefield"] = 3,
@@ -73,16 +75,20 @@ end
 e2function void g64MakeMario(entity player)
 	if player:IsValid() and player:IsPlayer() then
 		local mario = ents.Create("g64_mario")
+		mario:SetPos(player:GetPos())
 		mario:SetOwner(player)
 		mario:Spawn()
+		mario:Activate()
 	end
 end
 
 e2function void entity:g64MakeMario()
 	if this:IsValid() and this:IsPlayer() then
 		local mario = ents.Create("g64_mario")
+		mario:SetPos(this:GetPos())
 		mario:SetOwner(this)
 		mario:Spawn()
+		mario:Activate()
 	end
 end
 
@@ -96,6 +102,10 @@ e2function void entity:g64RemoveMario()
 	if this:IsValid() and this:IsPlayer() and IsValid(this.MarioEnt) then
 		this.MarioEnt:Remove()
 	end
+end
+
+e2function number entity:g64IsMario()
+	return this:IsValid() and this.IsMario and 1 or 0
 end
 
 -- Health
@@ -306,3 +316,61 @@ e2function void entity:g64MarioColor(number index, vector color)
 	end
 end
 
+-- position
+
+e2function void entity:g64MarioSetPos(vector pos)
+	if this:IsValid() and this:IsPlayer() and IsValid(this.MarioEnt) then
+		net.Start("G64_E2")
+			net.WriteString("SetPos")
+			net.WriteFloat(pos.x)
+			net.WriteFloat(pos.y)
+			net.WriteFloat(pos.z)
+			net.WriteBool(false)
+		net.Send(this)
+		WireLib.setPos(this, pos)
+		WireLib.setPos(this.MarioEnt, pos)
+	end
+end
+
+e2function void entity:g64MarioSetPos(vector pos, number spin)
+	if this:IsValid() and this:IsPlayer() and IsValid(this.MarioEnt) then
+	print("First",spin ~= 0)
+		net.Start("G64_E2")
+			net.WriteString("SetPos")
+			net.WriteFloat(pos.x)
+			net.WriteFloat(pos.y)
+			net.WriteFloat(pos.z)
+			net.WriteBool(spin ~= 0)
+		net.Send(this)
+		WireLib.setPos(this, pos)
+		WireLib.setPos(this.MarioEnt, pos)
+	end
+end
+
+
+
+e2function vector entity:g64MarioGetPos()
+	if this:IsValid() and this:IsPlayer() and IsValid(this.MarioEnt) then
+		WireLib.setPos(this.MarioEnt, pos)
+	end
+end
+
+E2Lib.registerEvent("g64MarioRespawned", { { "Player", "e" } })
+
+-- I'm so sorry
+if g64_e2.oldrespawn == nil then
+	local oldrespawn = net.Receivers["g64_respawnmario"]
+	local respawned = false
+	local function respawn(len, ply)
+		if not respawned then
+			respawned = true
+			oldrespawn(len, ply)
+		
+			--Wait for the player to have actually respawned
+			timer.Simple(1, function() E2Lib.triggerEvent("g64MarioRespawned", { ply } ) respawned = false end)
+		end
+	end
+
+	net.Receive("G64_RESPAWNMARIO", respawn)
+	g64_e2.oldrespawn = oldrespawn
+end

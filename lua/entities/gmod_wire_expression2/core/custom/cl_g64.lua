@@ -18,6 +18,23 @@ local function g64ClientReceive()
 		libsm64.MarioSetLives(mario.MarioId, mario.marioNumLives + net.ReadInt(8))
 	elseif action == "SetLives" then
 		libsm64.MarioSetLives(LocalPlayer().MarioEnt.MarioId, net.ReadInt(8))
+	elseif action == "SetColor" then
+		local index = net.ReadInt(4)
+		local colorAtIndex = LocalPlayer().MarioEnt.colorTable[index]
+		if colorAtIndex then
+			local color = net.ReadVector()
+			colorAtIndex[1] = color.r
+			colorAtIndex[2] = color.g
+			colorAtIndex[3] = color.b
+		end
+	elseif action == "SetPos" then
+		local pos = Vector(net.ReadFloat(), net.ReadFloat(), net.ReadFloat())
+		local mario = LocalPlayer().MarioEnt
+		local spin = net.ReadBool()
+		if mario.MarioId then
+			libsm64.SetMarioPosition(mario.MarioId, pos)
+			if spin ~= false then libsm64.SetMarioAction(mario.MarioId, 0x1924) end
+		end
 	elseif action == "EnableCap" then
 		local cap = net.ReadString()
 		if cap == "wing" then
@@ -41,15 +58,6 @@ local function g64ClientReceive()
 			state = bit.band(state, bit.bnot(0x2))
 			libsm64.SetMarioState(mario.MarioId, state)
 		end
-	elseif action == "SetColor" then
-		local index = net.ReadInt(4)
-		local colorAtIndex = LocalPlayer().MarioEnt.colorTable[index]
-		if colorAtIndex then
-			local color = net.ReadVector()
-			colorAtIndex[1] = color.r
-			colorAtIndex[2] = color.g
-			colorAtIndex[3] = color.b
-		end
 	end
 end
 net.Receive("G64_E2", g64ClientReceive)
@@ -59,6 +67,7 @@ E2Helper.Descriptions["g64PlayTrack(s)"] = "Plays one of the G64 music tracks fo
 E2Helper.Descriptions["g64StopAllTracks"] = "Stops all G64 music tracks for all players"
 E2Helper.Descriptions["g64MakeMario"] = "Turns a player into Mario"
 E2Helper.Descriptions["g64RemoveMario"] = "Turns a player back into normal"
+E2Helper.Descriptions["g64IsMario"] = "Returns 1 if the player is Mario, otherwise returns 0"
 E2Helper.Descriptions["g64MarioHealth"] = "Gets or sets the player's health"
 E2Helper.Descriptions["g64MarioDamage"] = "Damages the player for the amount of health"
 E2Helper.Descriptions["g64MarioDamage(e:nv)"] = "Damages the player for the amount of health with the damage origin local to the player"
@@ -70,3 +79,6 @@ E2Helper.Descriptions["g64MarioRemoveLives"] = "Removes a player's lives"
 E2Helper.Descriptions["g64MarioEnableCap"] = "Give the player the 'wing', 'metal', or 'vanish' cap"
 E2Helper.Descriptions["g64MarioDisableCap"] = "Removes the player's 'wing', 'metal', or 'vanish' cap"
 E2Helper.Descriptions["g64MarioColor"] = "Temporarily sets the color of the clothing. The indexes are in the same order as seen in the G64 settings"
+E2Helper.Descriptions["g64MarioSetPos"] = "Sets Mario's position"
+E2Helper.Descriptions["g64MarioSetPos(e:vn)"] = "Sets Mario's position. If spin is nonzero then Mario will spin as he falls as if he was spawned"
+E2Helper.Descriptions["g64MarioGetPos"] = "Gets Mario's position. Note that this may not always be accurate with Mario's position for the player"
