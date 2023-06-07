@@ -58,6 +58,21 @@ local function g64ClientReceive()
 			state = bit.band(state, bit.bnot(0x2))
 			libsm64.SetMarioState(mario.MarioId, state)
 		end
+	elseif action == "PlaySound" then
+		local sound = net.ReadString()
+		if sound == "raw" then
+			libsm64.PlaySoundGlobal(net.ReadInt(32))
+			return
+		end
+		sound = g64types.SM64SoundTable[sound]
+		local index = net.ReadInt(8)
+		if sound then
+			if istable(sound) then
+				if sound[1] == 8 then sound[1] = 3
+				elseif sound[1] == 9 then sound[1] = 5 end
+			end
+			libsm64.PlaySoundGlobal(GetSoundArg(sound) + (index ~= 0 and bit.lshift(index, 16) or 0))
+		end
 	end
 end
 net.Receive("G64_E2", g64ClientReceive)
@@ -65,6 +80,9 @@ net.Receive("G64_E2", g64ClientReceive)
 E2Helper.Descriptions["g64PlayTrack(n)"] = "Plays one of the G64 music tracks for all players. The index is the exact same as you see it in the menu (Lakitu = 34)."
 E2Helper.Descriptions["g64PlayTrack(s)"] = "Plays one of the G64 music tracks for all players. The name is the exact same as you see it in the menu."
 E2Helper.Descriptions["g64StopAllTracks"] = "Stops all G64 music tracks for all players"
+E2Helper.Descriptions["g64PlaySound(s)"] = "Plays one of the G64 sounds for all players. You can find a list of sounds in g64/lua/includes/g64_types."
+E2Helper.Descriptions["g64PlaySound(sn)"] = "Plays one of the G64 sounds for all players, with the added index for variation. You can find a list of sounds in g64/lua/includes/g64_types."
+E2Helper.Descriptions["g64PlaySoundRaw(n)"] = "Plays one of the G64 sounds for all players based on the actual address. You should only use this if you know what you're doing."
 E2Helper.Descriptions["g64MakeMario"] = "Turns a player into Mario"
 E2Helper.Descriptions["g64RemoveMario"] = "Turns a player back into normal"
 E2Helper.Descriptions["g64IsMario"] = "Returns 1 if the player is Mario, otherwise returns 0"
@@ -82,3 +100,9 @@ E2Helper.Descriptions["g64MarioColor"] = "Temporarily sets the color of the clot
 E2Helper.Descriptions["g64MarioSetPos"] = "Sets Mario's position"
 E2Helper.Descriptions["g64MarioSetPos(e:vn)"] = "Sets Mario's position. If spin is nonzero then Mario will spin as he falls as if he was spawned"
 E2Helper.Descriptions["g64MarioGetPos"] = "Gets Mario's position. Note that this may not always be accurate with Mario's position for the player"
+E2Helper.Descriptions["g64MarioTeleport"] = "Teleports mario instantly. This should be equivalent to SetPos, but may be more reliable."
+E2Helper.Descriptions["g64Spawn1Up"] = "Spawns a 1-Up at the position."
+E2Helper.Descriptions["g64SpawnCoin"] = "Spawns a yellow coin at the position."
+E2Helper.Descriptions["g64SpawnRedCoin"] = "Spawns a red coin at the position."
+E2Helper.Descriptions["g64SpawnBlueCoin"] = "Spawns a blue coin at the position."
+E2Helper.Descriptions["g64SpawnCap"] = "Spawns a 'wing', 'metal', or 'vanish' cap at the position."

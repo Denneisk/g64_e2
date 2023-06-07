@@ -70,12 +70,37 @@ e2function void g64StopAllTracks()
 	net.Broadcast()
 end
 
+e2function void g64PlaySound(string sound)
+	net.Start("G64_E2")
+		net.WriteString("PlaySound")
+		net.WriteString(sound:Trim())
+		net.WriteInt(0, 8)
+	net.Broadcast()
+end
+
+e2function void g64PlaySound(string sound, number index)
+	net.Start("G64_E2")
+		net.WriteString("PlaySound")
+		net.WriteString(sound:Trim())
+		net.WriteInt(index, 8)
+	net.Broadcast()
+end
+
+e2function void g64PlaySoundRaw(number sound)
+	net.Start("G64_E2")
+		net.WriteString("PlaySound")
+		net.WriteString("raw")
+		net.WriteInt(sound, 32)
+	net.Broadcast()
+end
+
 -- Mario
 
 e2function void g64MakeMario(entity player)
 	if player:IsValid() and player:IsPlayer() then
 		local mario = ents.Create("g64_mario")
 		mario:SetPos(player:GetPos())
+		mario:SetAngles(player:GetAngles())
 		mario:SetOwner(player)
 		mario:Spawn()
 		mario:Activate()
@@ -86,6 +111,7 @@ e2function void entity:g64MakeMario()
 	if this:IsValid() and this:IsPlayer() then
 		local mario = ents.Create("g64_mario")
 		mario:SetPos(this:GetPos())
+		mario:SetAngles(this:GetAngles())
 		mario:SetOwner(this)
 		mario:Spawn()
 		mario:Activate()
@@ -110,6 +136,7 @@ end
 
 -- Health
 
+[deprecated]
 e2function number g64MarioHealth(entity player)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		return player:Health()
@@ -122,6 +149,7 @@ e2function number entity:g64MarioHealth()
 	end
 end
 
+[deprecated]
 e2function void g64MarioHealth(entity player, number health)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		net.Start("G64_E2")
@@ -142,6 +170,7 @@ e2function void entity:g64MarioHealth(number health)
 	end
 end
 
+[deprecated]
 e2function void g64MarioDamage(entity player, number health)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		net.Start("G64_E2")
@@ -162,6 +191,7 @@ e2function void entity:g64MarioDamage(number health)
 	end
 end
 
+[deprecated]
 e2function void g64MarioDamage(entity player, number health, vector origin)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		net.Start("G64_E2")
@@ -182,6 +212,7 @@ e2function void entity:g64MarioDamage(number health, vector origin)
 	end
 end
 
+[deprecated]
 e2function void g64MarioHeal(entity player, number health)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		net.Start("G64_E2")
@@ -202,6 +233,7 @@ end
 
 -- Lives
 
+[deprecated]
 e2function void g64MarioSetLives(entity player, number lives)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		net.Start("G64_E2")
@@ -220,6 +252,7 @@ e2function void entity:g64MarioSetLives(number lives)
 	end
 end
 
+[deprecated]
 e2function void g64MarioAddLives(entity player, number lives)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		net.Start("G64_E2")
@@ -238,6 +271,7 @@ e2function void entity:g64MarioAddLives(number lives)
 	end
 end
 
+[deprecated]
 e2function void g64MarioRemoveLives(entity player, number lives)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		net.Start("G64_E2")
@@ -258,6 +292,7 @@ end
 
 -- Cap
 
+[deprecated]
 e2function void g64MarioEnableCap(entity player, string cap)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		net.Start("G64_E2")
@@ -276,6 +311,7 @@ e2function void entity:g64MarioEnableCap(string cap)
 	end
 end
 
+[deprecated]
 e2function void g64MarioDisableCap(entity player, string cap)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		net.Start("G64_E2")
@@ -296,6 +332,7 @@ end
 
 -- Color
 
+[deprecated]
 e2function void g64MarioColor(entity player, number index, vector color)
 	if player:IsValid() and player:IsPlayer() and IsValid(player.MarioEnt) then
 		net.Start("G64_E2")
@@ -334,7 +371,6 @@ end
 
 e2function void entity:g64MarioSetPos(vector pos, number spin)
 	if this:IsValid() and this:IsPlayer() and IsValid(this.MarioEnt) then
-	print("First",spin ~= 0)
 		net.Start("G64_E2")
 			net.WriteString("SetPos")
 			net.WriteFloat(pos.x)
@@ -354,6 +390,64 @@ e2function vector entity:g64MarioGetPos()
 		WireLib.setPos(this.MarioEnt, pos)
 	end
 end
+
+e2function void entity:g64MarioTeleport(vector pos, angle ang)
+	if this:IsValid() and this:IsPlayer() and IsValid(this.MarioEnt) then
+		net.Start("G64_TELEPORTMARIO")
+			net.WriteEntity(this.MarioEnt)
+			net.WriteVector(pos)
+			net.WriteAngle(ang)
+		net.Send(this)
+	end
+end
+
+-- Spawning
+
+e2function entity g64Spawn1Up(vector pos)
+	local e = ents.Create("g64_1up")
+	e:SetPos(pos)
+	e:Spawn()
+	e:Activate()
+	return e
+end
+
+e2function entity g64SpawnCoin(vector pos)
+	local e = ents.Create("g64_yellowcoin")
+	e:SetPos(pos)
+	e:Spawn()
+	e:Activate()
+	return e
+end
+
+e2function entity g64SpawnRedCoin(vector pos)
+	local e = ents.Create("g64_redcoin")
+	e:SetPos(pos)
+	e:Spawn()
+	e:Activate()
+	return e
+end
+
+e2function entity g64SpawnBlueCoin(vector pos)
+	local e = ents.Create("g64_bluecoin")
+	e:SetPos(pos)
+	e:Spawn()
+	e:Activate()
+	return e
+end
+
+e2function entity g64SpawnCap(vector pos, string cap)
+	cap = cap:Trim():lower()
+	if cap == "metal" or cap == "wing" or cap == "vanish" then
+		local e = ents.Create("g64_" .. cap .. "cap")
+		e:SetPos(pos)
+		e:Spawn()
+		e:Activate()
+		return e
+	end
+	return NULL
+end
+
+-- Events
 
 E2Lib.registerEvent("g64MarioRespawned", { { "Player", "e" } })
 
